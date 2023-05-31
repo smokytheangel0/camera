@@ -1,0 +1,30 @@
+[package]
+name = "camera"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# feature based motion detection
+# cv = "0.6.0"
+# std only lockfree queues
+# lockfree = "0.5.1"
+sled = "0.34.7"
+winit = "0.28.6"
+# uvc = {version = 0.2.0, features = ["vendor"]}
+# audio denoising
+# nnnoiseless = "0.5.1"
+# image denoising
+# oidn = "1.4.3"
+# using raster::filter::{sharpen, brightness}
+raster = "0.2.0"
+# libasound2-dev
+cpal = "0.15.2"
+# must be initialized
+# with .set_logger()
+log = "0.4.17"
+whisk = {version = "0.11.0", features = ["pasts"], path = "../whisk"}
+
+pasts = "0.14.2"
+iso8601 = {version = "0.6.1", default-features = false}
+futures-core = {version = "0.3.28", default-features = false}
+

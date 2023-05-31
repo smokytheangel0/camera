@@ -1,0 +1,93 @@
+we need a less flaky storage switching mech, which switches
+to any drive which has a newer insertion time than the current one
+logging needs to be centralized, and put on storage with the videos,
+audio should be stored to hard disk, as a backup to inherent risks
+we need a bendy spider and some silicone to bring the hardware up
+
+USB UVC is working, just not on this computer
+
+be sure to hit the cache on this dual core w/e, theres alot of stuff moving around
+and thread sizes too, so its important that its also adjustable to hit the cache
+on the rpi
+
+the cache on an AMD A4-1200 is 128KB L1 1MB l2 @ 1000Mhz
+the cache on an RPI B3+ 16kb L1 instruction 16kb L1 Data, 512KB L2
+
+a linux kernel thread uses 20Kib to do nothing 0.4Kib to do async context switch
+successfully replaced thread::spawn with task::spawn to use async instead of
+kernel threads
+
+the video in and audio in queues need to hold on to the most recent 20s of frames
+and that way when they are fed to the storage, it will start a new chunk labeled 
+20s ago and tag the audio and video chunk with (*motion*)
+how we handle the timely replacement of the frameberg that sticks to the output
+of the video_in queue, is worth more thought.
+
+alternatively the queues may be fed by an input function that keeps the last frame,
+and has a trigger to lock the input queue until storage gets new files for audio and video
+after storage has identified that it has positive write, the queue will release the frames again
+to be written to the new, marked file
+
+logging is easily done through rust crates, though choosing the storage directory
+mid run might be a little bit more advanced
+
+testing I/O bound units sequentially, and no side effect units in parallel
+
+the timestamp should be placed in a field in the frame struct
+so it can be correctly watermarked before storage, I'm not sure
+what an audio frame looks like, but I feel like it can be
+represented as a vector of bits just like a frame (1d vs 2d)
+
+the timestamp should be stored in the frame as a unix timestamp
+and only adjusted to timezone PST before encoding and storage
+using the iso 8601 crate
+
+we can have storage inserted but not mounted, and have the I/O tests toggle
+mounting in order to test absolute ordering and new mount detection and handling
+
+in order to mock the camera and work on the rest before attempting to rig it to
+the linux driver, we can record a raw stream from the video camera and just loop it
+and break it into frames and audio for the in queues to process
+UPDATE: using mjpeg and raster, we can create blank frames to mock
+the cameras out.
+
+a db like sled will keep track of links between video and audio clips, as well as persist various
+operating state to disk, so that the pipelines can be resumed in their shutdown state
+
+#SINCE IMPL
+so it looks like the steps for our audio transformation are:
+	1. Denoise
+	2. Normalize
+and our steps for our video transformation are (on mjpeg frames):
+	1. Denoise
+	2. Sharpen
+	3. Overexpose
+
+No std can be accomplished using whisk channels and bare metal threads
+with minimal work in the following crates:
+	juice/coaster
+	cv
+	raster
+	sled
+	lockfree
+	log
+
+this leaves just the de noising libs to check
+	oidn
+	nnnoiseless
+
+it also means our bare metal setup needs not just
+the things in the rpi basic build, but libusb2 in rust
+and some GPU stuff like loading kernels and rendering
+video frames and solids to displays through usb or built in.
+
+besides that everything seems in order just need to implement
+niceties: freeboard wired cameras like mipi, and seperate
+analog microphones through the headphone port on rpi
+wifi, both usb and hardware is another big one in order
+to get meshing working.
+
+TODO
+test channel overfill by blocking main long enough to
+send a number of frames through the channel, print on each send
+then recv them each and print on each recv
