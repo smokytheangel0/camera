@@ -1,2 +1,2 @@
-use crate::queue::AudioIn;
-pub fn start(queue: AudioIn) {}
+use crate::queue::{AudioUpdate, Sender};
+pub fn start(queue: Sender<AudioUpdate>) {}

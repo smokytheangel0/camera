@@ -1,4 +1,4 @@
-use crate::queue::{AudioStorage, LogStorage, VideoStorage};
+use crate::queue::{AudioUpdate, LogUpdate, Receiver, VideoUpdate};
 /// This is where we will retrieve frames in order
 /// from the video and audio queues, and begin a file
 /// or continue a file for each type. The events which will
@@ -47,6 +47,8 @@ pub enum RemovableStorage {
     Full,
 }
 
-pub fn log_start(queue: LogStorage) {}
-pub fn video_start(queue: VideoStorage) {}
-pub fn audio_start(queue: AudioStorage) {}
+pub async fn log_start(queue: Receiver<LogUpdate>) {
+    println!("started log storage task !>");
+}
+pub fn video_start(queue: Receiver<VideoUpdate>) {}
+pub fn audio_start(queue: Receiver<AudioUpdate>) {}

@@ -3,7 +3,7 @@ use crate::hardware::{
     storage::{MainStorage, RemovableStorage},
 };
 
-use crate::queue::ViewOut;
+use crate::queue::Receiver;
 /// This is where the ui thread will retrieve
 /// state from the ui queue and display the
 /// state as follows, a full screen blue
@@ -44,7 +44,8 @@ pub struct Frame {}
 /// This struct is retrieved from the queue by the
 /// UI thread, so that it can display the most current
 /// information about the system to the user
-struct ViewUpdate {
+/// this should be in the queue page
+pub struct ViewUpdate {
     /// this indicates the current status of the system
     status: Status,
     /// this is the most recent frame from the video source
@@ -120,4 +121,4 @@ struct RemovableDiskAndSecondaryCam {
     secondary_battery: SecondaryBattery,
 }
 
-pub fn start(queue: ViewOut) {}
+pub fn start(queue: Receiver<ViewUpdate>) {}

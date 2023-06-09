@@ -16,6 +16,10 @@ the cache on an RPI B3+ 16kb L1 instruction 16kb L1 Data, 512KB L2
 a linux kernel thread uses 20Kib to do nothing 0.4Kib to do async context switch
 successfully replaced thread::spawn with task::spawn to use async instead of
 kernel threads
+UPDATE: have decided that because pasts is single threaded, we can
+still spawn the four threads, with an task executor on each one,
+and just continiously poll each task, because it will never finish
+until the program is shutting down.
 
 the video in and audio in queues need to hold on to the most recent 20s of frames
 and that way when they are fed to the storage, it will start a new chunk labeled 
@@ -91,3 +95,29 @@ TODO
 test channel overfill by blocking main long enough to
 send a number of frames through the channel, print on each send
 then recv them each and print on each recv
+
+ON STORAGE
+our storage functions should write from seperate threads to
+a sled db with a different tree for each thread, and
+a seperate and low priority encoding task, will queue
+updates from each tree and round robin encode and write them
+out, yielding to the main stuff as much as possible
+removing items from the trees as it went
+
+the video and log trees could also be flushed on storage change,
+suspending everything but video and audio capture until it is complete
+
+it also looks like we are going to have to write logging ourselves, with
+a multi producer single consumer queue, because std::io is locking
+
+the simple logger crate is MIT so we should be able to use its macros,
+with our receivers, with attr, in order to keep our data nice
+that way we can also rig it to use non OS sources of time
+
+lets try and use the macros only and println! and storage queue
+to handle getting the log statements out.
+
+to use the format macros we need to pull in the log::STATIC_MAX_LEVEL,
+	log::max_level()
+	some private __ and _ functions from it as well
+	they should have listed the imports

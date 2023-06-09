@@ -4,5 +4,7 @@
 /// use encryption if possible
 /// send basic status through bluetooth
 /// to feature phone
-use crate::queue::LogOut;
-pub fn start(queue: LogOut) {}
+use crate::queue::{LogUpdate, Receiver};
+pub async fn start(queue: Receiver<LogUpdate>) {
+    println!("have started bluetooth task !>");
+}

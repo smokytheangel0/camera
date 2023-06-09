@@ -3,6 +3,9 @@ name = "camera"
 version = "0.1.0"
 edition = "2021"
 
+[toolchain]
+channel = "nightly"
+
 [dependencies]
 # feature based motion detection
 # cv = "0.6.0"
@@ -22,9 +25,15 @@ cpal = "0.15.2"
 # must be initialized
 # with .set_logger()
 log = "0.4.17"
-whisk = {version = "0.11.0", features = ["pasts"], path = "../whisk"}
+whisk = {version = "0.11.0", features = ["pasts"], path = "../../queues/whisk"}
+
 
 pasts = "0.14.2"
 iso8601 = {version = "0.6.1", default-features = false}
 futures-core = {version = "0.3.28", default-features = false}
+async_main = {version = "0.4.0", features = ["pasts"]}
+# unix timestamp to internet is8601 (rfc3339)
+#eep = "0.1.0"
+simple_logger = {version = "4.1.0", features = ["colors", "threads", "nightly", "stderr"]}
+nolock = {version = "0.4.1", features = ["async", "atomic", "futures", "hash_trie"]}
 

@@ -1,4 +1,4 @@
-use crate::queue::{VideoIn, VideoUpdate};
+use crate::queue::{Sender, VideoUpdate};
 /// This is where we will retrieve video
 /// from either a USB source or a mock source. The timestamp
 /// and the metadata important for making audio and video
@@ -120,11 +120,11 @@ impl IRSensitiveCamera {
         }
     }
 }
-
-pub async fn start(queue: VideoIn) {
+use log::info;
+pub fn start(mut queue: Sender<VideoUpdate>) {
     for _ in 1..=10 {
         let new_mock_frame = VideoUpdate {};
-        queue.send(Some(new_mock_frame));
-        println!("just sent a frame from camera to main!");
+        queue.enqueue(new_mock_frame);
+        info!("just sent a frame from camera to main!");
     }
 }

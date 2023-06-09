@@ -1,2 +1,2 @@
-use crate::queue::{FromVideoCompute, ToVideoCompute};
-pub fn start(video_from_main: ToVideoCompute, video_to_main: FromVideoCompute) {}
+use crate::queue::{Receiver, Sender, VideoUpdate};
+pub fn start(video_from_main: Receiver<VideoUpdate>, video_to_main: Sender<VideoUpdate>) {}
