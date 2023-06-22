@@ -120,5 +120,7 @@ struct RemovableDiskAndSecondaryCam {
     main_battery: MainBattery,
     secondary_battery: SecondaryBattery,
 }
-
-pub fn start(queue: Receiver<ViewUpdate>) {}
+use crate::log::{Job, LogPipe};
+pub async fn start(queue: Receiver<ViewUpdate>, ui_log: LogPipe) {
+    ui_log.info("started UI", Job::UI);
+}

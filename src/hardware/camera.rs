@@ -120,11 +120,15 @@ impl IRSensitiveCamera {
         }
     }
 }
-use log::info;
-pub fn start(mut queue: Sender<VideoUpdate>) {
+use crate::log::{Job, LogPipe};
+pub async fn start(mut queue: Sender<VideoUpdate>, camera_log: LogPipe) {
+    camera_log.info("started camera task", Job::VideoInput);
     for _ in 1..=10 {
         let new_mock_frame = VideoUpdate {};
-        queue.enqueue(new_mock_frame);
-        info!("just sent a frame from camera to main!");
+        queue
+            .enqueue(new_mock_frame)
+            .expect("failed to send mock frame from camera task to main");
+        camera_log
+            .info("just sent a frame from camera to main", Job::VideoInput);
     }
 }

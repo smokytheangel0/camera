@@ -71,6 +71,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc7eb209b1518d6bb87b283c20095f5228ecda460da70b44f0802523dea6da04"
 
 [[package]]
+name = "anyhow"
+version = "1.0.71"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c7d0618f0e0b7e8ff11427422b64564d5fb0be1940354bfe2e0529b18a9d9b8"
+
+[[package]]
 name = "arrayref"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -81,22 +87,6 @@ name = "arrayvec"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
-
-[[package]]
-name = "async_main"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9229c055d66cba2b97b10381b7a1c56db6bdd3234daa4bee21260e96081460a1"
-dependencies = [
- "async_main_macro",
- "pasts",
-]
-
-[[package]]
-name = "async_main_macro"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c61a19d4ab2db23de9a52d0085948e6647c0abd46cf0361de57e6716b65c785"
 
 [[package]]
 name = "atomic"
@@ -219,7 +209,7 @@ dependencies = [
 name = "camera"
 version = "0.1.0"
 dependencies = [
- "async_main",
+ "anyhow",
  "cpal",
  "futures-core",
  "iso8601",
@@ -229,7 +219,6 @@ dependencies = [
  "raster",
  "simple_logger",
  "sled",
- "whisk",
  "winit",
 ]
 
@@ -2055,14 +2044,6 @@ checksum = "3bdd9ef4e984da1187bf8110c5cf5b845fbc87a23602cdf912386a76fcd3a7c2"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "whisk"
-version = "0.11.0"
-dependencies = [
- "futures-core",
- "pasts",
 ]
 
 [[package]]

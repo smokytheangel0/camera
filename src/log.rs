@@ -1,87 +1,187 @@
-use crate::queue::Sender as AsyncSender;
-/// these functions should format the incoming string with time, and !>
-///
-/// they should use a global receiver and should feed the
-/// println! macro on std and log out and log storage pipelines
-///
-///
-/// this file should also include the sender functions
-use nolock::queues::mpsc::jiffy::{queue, Receiver, Sender};
-use std::mem::MaybeUninit;
+use core::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-/// the hard coded size of the queue
-/// 60 fps for 60 seconds (1 minute)
-const QUEUE_SIZE: usize = 60 * 60;
+use nolock::queues::mpsc::jiffy::{queue, Sender};
+use nolock::queues::spsc::bounded::BoundedSender;
 
-/// the memory location where our logging
-/// facilities can find the receiving end
-/// of the log queue, must be initialized
-/// with set_pipe() in main
-const RECEIVER: MaybeUninit<Receiver<LogUpdate>> = MaybeUninit::<Receiver<LogUpdate>>::uninit();
+/// a global that marks whether set_pipe() has been called
+const INITIALIZED: AtomicBool = AtomicBool::new(false);
 
-/// the memory location where the user
-/// logging functions can find the mother
-/// send side of the queue, to be cloned for
-/// each new use, the clone will be discarded
-/// at the end of the function
-const SENDER: MaybeUninit<Arc<Sender<LogUpdate>>> = MaybeUninit::<Arc<Sender<LogUpdate>>>::uninit();
-// TODO: must remember to decrement the arc on final shutdown
-
-/// a value that marks whether set_pipe() has been called
-static mut INITIALIZED: bool = false;
-
-/// call this function to hook up the logging
-/// queue, a new sender is available in each
-/// call of info(), warn(), error(), or trace()
-#[must_use]
-pub fn set_pipe(
-    log_out_sender: AsyncSender<LogUpdate>,
-    log_storage_sender: AsyncSender<LogUpdate>,
-) {
-    // INITIALIZED always has a value
-    if !unsafe { INITIALIZED } {
-        let (receiver, sender) = queue::<LogUpdate>();
-        unsafe {
-            // the receiver is meant to be
-            // used by a single consumer
-            // this is only GLOBAL because
-            // the queue() function from
-            // nolock returns both sides
-            RECEIVER.write(receiver);
-
-            // the sender is meant to be cloned
-            // so that multiple producers may
-            // queue updates through it, it
-            // is global to simplify log
-            // function arguments
-            SENDER.write(Arc::new(sender));
-            INITIALIZED = true;
-        }
-
-        // dequeue elements from the receiver as they are sent
-        loop {
-            // we can assume the RECEIVER has been initialized
-            let update;
-            unsafe {
-                update = RECEIVER
-                    .assume_init()
-                    .try_dequeue()
-                    .expect("failed to pop LogUpdate from the pipe");
-            }
-            // print, clone and push the update onto log out and log storage
-            // on shutdown break the loop so the stuff may be dropped
-        }
-        unsafe {
-            INITIALIZED = false;
-            SENDER.assume_init_drop();
-            RECEIVER.assume_init_drop();
-        }
-    } else {
-        panic!("you cannot call log::set_pipe() twice");
-    }
+#[derive(Clone)]
+pub struct LogPipe {
+    sender: Arc<Sender<LogUpdate>>,
+    from_task: bool,
+    from_thread: bool,
 }
 
+impl LogPipe {
+    /// call this function to hook up the logging
+    /// queue, a new sender is available in each
+    /// call of info(), warn(), error(), or trace()
+    pub fn set_pipe(
+        log_out_sender: BoundedSender<LogUpdate>,
+        log_storage_sender: BoundedSender<LogUpdate>,
+    ) -> LogPipe {
+        if !INITIALIZED.load(Ordering::SeqCst) {
+            if !cfg!(no_std) {
+                simple_logger::init()
+                    .expect("failed to initialize simple_logger");
+            }
+
+            let (mut receiver, sender) = queue::<LogUpdate>();
+
+            std::thread::spawn(move || {
+                'read_update: loop {
+                    let update = match receiver.try_dequeue() {
+                        Ok(update) => update,
+                        Err(err) => match err {
+                            nolock::queues::DequeueError::Closed => {
+                                panic!("mpsc log queue was closed by sender?")
+                            }
+                            nolock::queues::DequeueError::Empty => {
+                                continue 'read_update;
+                            }
+                        },
+                    };
+
+                    if cfg!(no_std) {
+                        //this should be replaced by an embedded serial write
+                        //println!("{:?}", update);
+                    } else {
+                        //by using a default user_string length and always padding
+                        // the user_string up to the length, we can make our details line up
+                        let mut user_string =
+                            format!("{} !>", update.user_string);
+                        let desired_length = 42;
+                        if update.user_string.len() < desired_length {
+                            let difference =
+                                desired_length - update.user_string.len();
+                            let padding = " ";
+                            for _i in 0..difference {
+                                user_string =
+                                    format!("{}{}", user_string, padding);
+                            }
+                        }
+
+                        //println!("{} job: {:?}, thread: {}, task: {}", user_string, update.job, update.from_thread, update.from_task);
+                        match update.level {
+                            Level::Error => log::error!(
+                                "{} job: {:?}, thread: {}, task: {}",
+                                user_string,
+                                update.job,
+                                update.from_thread,
+                                update.from_task
+                            ),
+                            Level::Warn => log::warn!(
+                                "{} job: {:?}, thread: {}, task: {}",
+                                user_string,
+                                update.job,
+                                update.from_thread,
+                                update.from_task
+                            ),
+                            Level::Info => log::info!(
+                                "{} job: {:?}, thread: {}, task: {}",
+                                user_string,
+                                update.job,
+                                update.from_thread,
+                                update.from_task
+                            ),
+                        }
+                    }
+
+                    // print, clone and push the update onto log out and log storage
+                    // on shutdown break the loop so the stuff may be dropped
+                    //break 'read_update;
+                }
+                //drop the receiver, so calls to enqueue
+                //return an error
+                drop(receiver);
+            });
+
+            return LogPipe {
+                sender: Arc::new(sender),
+                from_task: false,
+                from_thread: false,
+            };
+        } else {
+            panic!("you cannot call log::set_pipe() twice");
+        }
+    }
+
+    /// call this function to log to stdout
+    /// when in debug mode, and to disk and
+    /// through broadcast when in production
+    pub fn info(&self, explanation: &str, job: Job) {
+        if !INITIALIZED.load(Ordering::SeqCst) {
+            self.sender
+                .clone()
+                .enqueue(LogUpdate {
+                    user_string: explanation.into(),
+                    level: Level::Info,
+                    job,
+                    from_task: self.from_task,
+                    from_thread: self.from_thread,
+                })
+                .expect("failed to send info log update to the receiver");
+        } else {
+            panic!("must call log::set_pipe() before using log::info()");
+        }
+    }
+
+    /// call this function to log to stdout
+    /// when in debug mode, and to disk and
+    /// through broadcast when in production
+    pub fn warn(&self, condition: &str, job: Job) {
+        if !INITIALIZED.load(Ordering::SeqCst) {
+            self.sender
+                .clone()
+                .enqueue(LogUpdate {
+                    user_string: condition.into(),
+                    level: Level::Warn,
+                    job,
+                    from_task: self.from_task,
+                    from_thread: self.from_thread,
+                })
+                .expect("failed to send warn log update to the receiver");
+        } else {
+            panic!("must call log::set_pipe() before using log::warn()");
+        }
+    }
+
+    /// call this function to log to stdout
+    /// when in debug mode, and to disk and
+    /// through broadcast when in production
+    pub fn error(&self, shouldnt_happen: &str, job: Job) {
+        if !INITIALIZED.load(Ordering::SeqCst) {
+            self.sender
+                .clone()
+                .enqueue(LogUpdate {
+                    user_string: shouldnt_happen.into(),
+                    level: Level::Error,
+                    job,
+                    from_task: self.from_task,
+                    from_thread: self.from_thread,
+                })
+                .expect("failed to send warn log update to the receiver");
+        } else {
+            panic!("must call log::set_pipe() before using log::error()");
+        }
+    }
+
+    // a convenience function to make
+    // thread log use more concise
+    pub fn new_thread_log(&mut self) -> LogPipe {
+        self.from_thread = true;
+        self.clone()
+    }
+
+    // a convenience function to make
+    // task log use more concise
+    pub fn new_task_log(&mut self) -> LogPipe {
+        self.from_task = true;
+        self.clone()
+    }
+}
 /// this is a single frame
 /// of the logger
 #[derive(Debug)]
@@ -90,6 +190,15 @@ pub struct LogUpdate {
     user_string: String,
     /// this is where we store an enum of the level
     level: Level,
+    /// this is where we store an enum of where the
+    /// message comes from within the program
+    job: Job,
+    /// this is where we make note of whether
+    /// the message comes from a task
+    from_task: bool,
+    /// this is where we make not of whether
+    /// the message comes from a thread
+    from_thread: bool,
 }
 
 /// the level describes the severity
@@ -109,50 +218,22 @@ enum Level {
     Error,
 }
 
-/// call this function to log to stdout
-/// when in debug mode, and to disk and
-/// through broadcast when in production
-pub fn info(explanation: &str) {
-    // INITIALIZED always has a value
-    if !unsafe { INITIALIZED } {
-        let local_sender = unsafe { SENDER.assume_init().clone() };
-        local_sender.enqueue(LogUpdate {
-            user_string: explanation.into(),
-            level: Level::Info,
-        }).expect("failed to send info log update to the receiver");
-    } else {
-        panic!("must call log::set_pipe() before using log::info()");
-    }
-}
-
-/// call this function to log to stdout
-/// when in debug mode, and to disk and
-/// through broadcast when in production
-pub fn warn(condition: &str) {
-    // INITIALIZED always has a value
-    if !unsafe { INITIALIZED } {
-        let local_sender = unsafe { SENDER.assume_init().clone() };
-        local_sender.enqueue(LogUpdate {
-            user_string: condition.into(),
-            level: Level::Warn,
-        }).expect("failed to send warn log update to the receiver");
-    } else {
-        panic!("must call log::set_pipe() before using log::warn()");
-    }
-}
-
-/// call this function to log to stdout
-/// when in debug mode, and to disk and
-/// through broadcast when in production
-pub fn error(shouldnt_happen: &str) {
-    // INITIALIZED always has a value
-    if !unsafe { INITIALIZED } {
-        let local_sender = unsafe { SENDER.assume_init().clone() };
-        local_sender.enqueue(LogUpdate {
-            user_string: shouldnt_happen.into(),
-            level: Level::Error,
-        }).expect("failed to send warn log update to the receiver");
-    } else {
-        panic!("must call log::set_pipe() before using log::error()");
-    }
+#[derive(Debug)]
+///TODO: doc
+pub enum Job {
+    LogOut,
+    LogStorage,
+    LogSetup,
+    AudioCompute,
+    AudioInput,
+    AudioStorage,
+    AudioSetup,
+    VideoCompute,
+    VideoInput,
+    VideoStorage,
+    VideoSetup,
+    UI,
+    UISetup,
+    Main,
+    Debug,
 }
