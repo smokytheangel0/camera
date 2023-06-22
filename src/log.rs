@@ -180,15 +180,16 @@ impl LogPipe {
         }
     }
 
-    // a convenience function to make
-    // thread log use more concise
+    /// this function creates a new log sender
+    /// and marks it as coming from inside a thread
     pub fn new_thread_log(&mut self) -> LogPipe {
         self.from_thread = true;
         self.clone()
     }
 
-    // a convenience function to make
-    // task log use more concise
+    /// this function creates a new log sender
+    /// and marks it as coming from inside an
+    /// asynchronous task
     pub fn new_task_log(&mut self) -> LogPipe {
         self.from_task = true;
         self.clone()
