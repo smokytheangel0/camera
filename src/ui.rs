@@ -121,6 +121,10 @@ struct RemovableDiskAndSecondaryCam {
     secondary_battery: SecondaryBattery,
 }
 use crate::log::{Job, LogPipe};
+
+/// in this function we use winit to create our locked
+/// viewfinder and display information to the user via
+/// the LCD screen
 pub async fn start(queue: Receiver<ViewUpdate>, ui_log: LogPipe) {
     ui_log.info("started UI", Job::UI);
 }

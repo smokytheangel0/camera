@@ -8,9 +8,21 @@ use nolock::queues::spsc::bounded::BoundedSender;
 const INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 #[derive(Clone)]
+/// this structure is used to hold important
+/// logging state, so that it may be used
+/// correctly and freely from the main program
 pub struct LogPipe {
+    /// an Arc'd Sender allows
+    /// us to clone the send side
+    /// of the pipe for use with
+    /// multiple senders
     sender: Arc<Sender<LogUpdate>>,
+    /// this indicates the log message
+    /// came from inside an async task
     from_task: bool,
+    /// this indicates the log message
+    /// came from inside another thread
+    /// besides main
     from_thread: bool,
 }
 
@@ -182,6 +194,7 @@ impl LogPipe {
         self.clone()
     }
 }
+
 /// this is a single frame
 /// of the logger
 #[derive(Debug)]
@@ -219,21 +232,62 @@ enum Level {
 }
 
 #[derive(Debug)]
-///TODO: doc
+/// Distinct Jobs allow us to sort
+/// our logs based on the area we are
+/// working in, besides just the typical
+/// log levels
 pub enum Job {
+    /// this indicates the log message
+    /// came from somewhere in our 
+    /// bluetooth logging functions
     LogOut,
+    /// this indicates the log message
+    /// came from somewhere in our
+    /// Log Storage functions
     LogStorage,
+    /// this indicates the message occured
+    /// during setup of the logging aparatus
+    /// in the main function
     LogSetup,
+    /// this indicates the message came from
+    /// the audio post processing functions
     AudioCompute,
+    /// this inidcates the message came from
+    /// the microphone capture functions
     AudioInput,
+    /// this indicates the message came from
+    /// the audio storage functinos
     AudioStorage,
+    /// this inidcates the message occured
+    /// during setup of the audio aparatus
+    /// in the main function
     AudioSetup,
+    /// this indicates the message came from
+    /// the video post processing functions
     VideoCompute,
+    /// this indicates the message came from
+    /// the camera capture functions
     VideoInput,
+    /// this indicates the message came from
+    /// the video storage functions
     VideoStorage,
+    /// this indicates the message occured
+    /// during setup of the video aparatus
+    /// in the main function
     VideoSetup,
+    /// this indicates the message came
+    /// from the UI functions
     UI,
+    /// this indicates the messsage occured
+    /// during setup of the UI aparatus
+    /// in the main function
     UISetup,
+    /// this indicates the message came from
+    /// the main function where all of the
+    /// functions are tied together as
+    /// a program
     Main,
+    /// this indicates the message is temporarily
+    /// used to help figure out a bug
     Debug,
 }

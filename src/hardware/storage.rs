@@ -48,10 +48,17 @@ pub enum RemovableStorage {
     Full,
 }
 
+/// this function opens a file on either the main storage
+/// usb storage or both, and appends each LogUpdate that
+/// comes down the pipe, to the file that was created
 pub async fn log_start(queue: Receiver<LogUpdate>, log_storage_log: LogPipe) {
     log_storage_log.info("started log storage", Job::LogStorage);
 }
 
+/// this function opens a file on either the main storage
+/// (if no removable exists), or by default to the usb
+/// storage, allowing the user to view the videos on
+/// a PlayStation 3
 pub async fn video_start(
     queue: Receiver<VideoUpdate>,
     video_storage_log: LogPipe,
@@ -59,6 +66,12 @@ pub async fn video_start(
     video_storage_log.info("started video storage", Job::VideoStorage);
 }
 
+/// this function opens a file on the main storage
+/// in order to keep potentially illegal audio recordings
+/// seperate from the video files to be used in legal
+/// proceedings, audio files should only be used for
+/// intelligence gathering rather than for capturing
+/// disruptive activity directly
 pub async fn audio_start(
     queue: Receiver<AudioUpdate>,
     audio_storage_log: LogPipe,
