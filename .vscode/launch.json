@@ -11,6 +11,7 @@
             "cargo": {
                 "args": [
                     "build",
+                    "--features=default",
                     "--bin=camera",
                     "--package=camera"
                 ],

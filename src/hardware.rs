@@ -9,7 +9,7 @@ pub mod storage;
 /// kinds of hardware interfaces that we will be
 /// using the communicate with both real and mock
 /// hardware.
-/// we should create an impl for each hardware
-/// component that says 'start' and takes
+/// there should be a function for each hardware
+/// component called 'start' which takes
 /// a send handle to its queue(s)
 struct Hardware {}

@@ -10,15 +10,23 @@
 /// keep away from race conditions, without locking the
 /// queue when its in use. This can be thought of as
 /// a pipeline with a sender and a receiver.
-pub use nolock::queues::spsc::bounded::queue as new_bounded_queue;
-pub use nolock::queues::spsc::bounded::BoundedReceiver as Receiver;
-pub use nolock::queues::spsc::bounded::BoundedSender as Sender;
+pub use nolock::queues::mpsc::jiffy::async_queue as new_unbounded_queue;
+pub use nolock::queues::mpsc::jiffy::AsyncReceiver as Receiver;
+pub use nolock::queues::mpsc::jiffy::AsyncSender as Sender;
+
+use std::string::String;
+use std::vec::Vec;
 /// this is where we store our audio
 /// frames and information like timestamp
 /// in order to pass the audio through
 /// the pipeline (queue)
 #[derive(Debug)]
-pub struct AudioUpdate {}
+
+pub struct AudioUpdate {
+    pub data: Vec<f32>,
+    pub timestamp: u64,
+    pub name: String,
+}
 /// one minute worth of frames
 const AUDIO_QUEUE_SIZE: usize = 60 * 60;
 
@@ -28,7 +36,7 @@ const AUDIO_QUEUE_SIZE: usize = 60 * 60;
 pub struct AudioIn {}
 impl AudioIn {
     pub fn new() -> (Receiver<AudioUpdate>, Sender<AudioUpdate>) {
-        new_bounded_queue(AUDIO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 /// this is how we lock a pipeline(channel)
@@ -38,7 +46,7 @@ impl AudioIn {
 pub struct ToAudioCompute {}
 impl ToAudioCompute {
     pub fn new() -> (Receiver<AudioUpdate>, Sender<AudioUpdate>) {
-        new_bounded_queue(AUDIO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -49,7 +57,7 @@ impl ToAudioCompute {
 pub struct FromAudioCompute {}
 impl FromAudioCompute {
     pub fn new() -> (Receiver<AudioUpdate>, Sender<AudioUpdate>) {
-        new_bounded_queue(AUDIO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -59,7 +67,7 @@ impl FromAudioCompute {
 pub struct AudioStorage {}
 impl AudioStorage {
     pub fn new() -> (Receiver<AudioUpdate>, Sender<AudioUpdate>) {
-        new_bounded_queue(AUDIO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -77,7 +85,7 @@ const LOG_QUEUE_SIZE: usize = 60 * 60;
 pub struct LogStorage {}
 impl LogStorage {
     pub fn new() -> (Receiver<LogUpdate>, Sender<LogUpdate>) {
-        new_bounded_queue(LOG_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -88,7 +96,7 @@ impl LogStorage {
 pub struct LogOut {}
 impl LogOut {
     pub fn new() -> (Receiver<LogUpdate>, Sender<LogUpdate>) {
-        new_bounded_queue(LOG_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -105,7 +113,7 @@ const VIEW_QUEUE_SIZE: usize = 60 * 60;
 pub struct ViewOut {}
 impl ViewOut {
     pub fn new() -> (Receiver<ViewUpdate>, Sender<ViewUpdate>) {
-        new_bounded_queue(VIEW_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -125,7 +133,7 @@ const VIDEO_QUEUE_SIZE: usize = 3600;
 pub struct VideoIn {}
 impl VideoIn {
     pub fn new() -> (Receiver<VideoUpdate>, Sender<VideoUpdate>) {
-        new_bounded_queue(VIDEO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -136,7 +144,7 @@ impl VideoIn {
 pub struct ToVideoCompute {}
 impl ToVideoCompute {
     pub fn new() -> (Receiver<VideoUpdate>, Sender<VideoUpdate>) {
-        new_bounded_queue(VIDEO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -147,7 +155,7 @@ impl ToVideoCompute {
 pub struct FromVideoCompute {}
 impl FromVideoCompute {
     pub fn new() -> (Receiver<VideoUpdate>, Sender<VideoUpdate>) {
-        new_bounded_queue(VIDEO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 
@@ -158,7 +166,7 @@ impl FromVideoCompute {
 pub struct VideoStorage {}
 impl VideoStorage {
     pub fn new() -> (Receiver<VideoUpdate>, Sender<VideoUpdate>) {
-        new_bounded_queue(VIDEO_QUEUE_SIZE)
+        new_unbounded_queue()
     }
 }
 

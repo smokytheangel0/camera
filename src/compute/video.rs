@@ -7,8 +7,8 @@ use crate::queue::{Receiver, Sender, VideoUpdate};
 /// to noise ratio and make movement
 /// more perceptable
 pub async fn start(
-    video_from_main: Receiver<VideoUpdate>,
-    video_to_main: Sender<VideoUpdate>,
+    video_from_camera: Receiver<VideoUpdate>,
+    video_to_storage: Sender<VideoUpdate>,
     video_compute_log: LogPipe,
 ) {
     video_compute_log.info("started processing video", Job::VideoCompute);

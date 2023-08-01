@@ -1,0 +1,34 @@
+1690500706 :: Main            :: creating logging thread                       :: from {thread: main, task: false}
+1690500708 :: LogSetup        :: logging thread started                        :: from {thread: log effects, task: false}
+1690500708 :: LogStorage      :: log storage task started                      :: from {thread: log effects, task: true}
+1690500708 :: LogStorage      :: started log storage                           :: from {thread: log effects, task: true}
+1690500711 :: Main            :: creating new audio in queue                   :: from {thread: main, task: false}
+1690500711 :: Main            :: creating new input queue for audio compute    :: from {thread: main, task: false}
+1690500711 :: Main            :: creating new output queue for audio compute   :: from {thread: main, task: false}
+1690500711 :: Main            :: creating new audio storage queue              :: from {thread: main, task: false}
+1690500711 :: Main            :: creating audio thread                         :: from {thread: main, task: false}
+1690500711 :: LogStorage      :: created or opened file                        :: from {thread: log effects, task: true}
+1690500716 :: Main            :: creating new video in queue                   :: from {thread: main, task: false}
+1690500716 :: Main            :: creating new input queue for video compute    :: from {thread: main, task: false}
+1690500716 :: Main            :: creating new output queue for video compute   :: from {thread: main, task: false}
+1690500716 :: Main            :: creating new video storage queue              :: from {thread: main, task: false}
+1690500716 :: Main            :: creating video thread                         :: from {thread: main, task: false}
+1690500721 :: VideoSetup      :: video thread started                          :: from {thread: video, task: false}
+1690500721 :: VideoInput      :: camera task started                           :: from {thread: video, task: true}
+1690500721 :: VideoInput      :: started camera task                           :: from {thread: video, task: true}
+1690500721 :: VideoStorage    :: video storage task started                    :: from {thread: video, task: true}
+1690500721 :: VideoStorage    :: started video storage                         :: from {thread: video, task: true}
+1690500721 :: VideoCompute    :: video compute task started                    :: from {thread: video, task: true}
+1690500721 :: VideoCompute    :: started processing video                      :: from {thread: video, task: true}
+1690500721 :: Main            :: creating new input queue for the UI           :: from {thread: main, task: false}
+1690500721 :: Main            :: creating the UI thread                        :: from {thread: main, task: false}
+1690500724 :: AudioSetup      :: audio thread started                          :: from {thread: audio, task: false}
+1690500724 :: AudioInput      :: microphone task started                       :: from {thread: audio, task: true}
+1690500724 :: AudioInput      :: started audio input                           :: from {thread: audio, task: true}
+1690500724 :: AudioInput      :: got device: default                           :: from {thread: audio, task: true}
+1690500724 :: UISetup         :: UI thread started                             :: from {thread: ui, task: false}
+1690500724 :: UI              :: UI task started                               :: from {thread: ui, task: true}
+1690500724 :: UI              :: started UI                                    :: from {thread: ui, task: true}
+1690500726 :: Debug           :: woke up from 1 second sleep                   :: from {thread: main, task: false}
+1690500727 :: Debug           :: woke up from 1 second sleep                   :: from {thread: main, task: false}
+1690500728 :: Debug           :: woke up from 1 second sleep                   :: from {thread: main, task: false}

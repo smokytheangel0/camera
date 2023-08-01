@@ -1,0 +1,302 @@
+3 bytes from
+	snd_config_hook_load()
+	
+4 bytes from
+	cpal::host::alsa::DeviceHandles::get_mut (mod.rs:229)
+
+4 bytes from
+	alsa::pcm::PCM::new (pcm.rs:120)
+
+12 bytes from
+	snd_config_hook_load()
+
+12 bytes from
+	snd_pcm_open()
+
+14 bytes from
+	snd_config_update_ref()
+
+14 bytes from
+	alsa::pcm::PCM::new (pcm.rs:120)
+
+15 bytes from
+	snd_config_searcha_hooks()
+
+16 bytes from
+	snd_config_searchva_hooks()
+
+16 bytes from
+	alsa::pcm::PCM::new (pcm.rs:120)
+
+17 bytes from
+	snd_config_hook_load()
+
+18 bytes from
+	snd_config_update_r()
+
+20 bytes from
+	cpal::host::alsa::Device::supported_configs (mod.rs:314)
+
+28 bytes from
+	snd_pcm_open()
+
+28 bytes from
+	alsa::pcm::PCM::open (pcm.rs 131)
+
+29 bytes from
+	alsa::pcm::PCM::new (pcm.rs:120)
+
+30 bytes from
+	alsa::pcm::PCM::open (pcm.rs:131)
+
+31 bytes from
+	malloc()
+
+34 bytes from
+	malloc()
+
+40 bytes from
+	snd_config_update_ref()
+
+55 bytes from
+	snd_config_hook_load()
+
+56 bytes from
+	cpal::host::alsa::Device::default_config (mod.rs:467)
+
+56 bytes from
+	cpal::host::alsa::DeviceHandles::try_open (mod.rs:216)
+
+63 bytes from
+	snd_config_hook_load()
+
+65 bytes from
+	cpal::host::alsa::Device::supported_configs (mod.rs:314)
+
+72 bytes from
+	snd_pcm_open
+
+72 bytes from
+	snd_config_searcha_hooks
+
+99 bytes from
+	snd_pcm_open
+
+109 bytes from
+	snd_config_hook_load
+
+112 bytes from
+	snd_pcm_open
+
+
+116 bytes from
+	snd_pcm_open
+
+139 bytes from
+	snd_config_hook_load
+
+144 bytes from
+	cpal::host::alsa::DeviceHandles::try_open (mod.rs:216)
+
+144 bytes from
+	alsa::pcm::PCM::new (pcm.rs:120)
+
+144 bytes from
+	alsa::pcm::PCM::open (pcm.rs:131)
+
+144 bytes from
+	snd_config_update_ref
+
+144 bytes from
+	snd_pcm_open
+
+144 bytes from
+	alsa::pcm::PCM::open (pcm.rs:131)
+
+304 bytes from
+	camera::main (main.rs:47)
+
+304 bytes from
+	camera::main (main.rs:51)
+
+304 bytes from
+	camera::main (main.rs:95)
+
+304 bytes from
+	camera::main (main.rs:148)
+
+304 bytes from
+	camera::main (main.rs:192)
+
+320 bytes from
+	alsa::pcm::PCM::new (pcm.rs:120)
+
+320 bytes from
+	camera::hardware::audio::has_side_effects::use_stream (link.rs:50)
+
+358 bytes from
+	alsa::pcm::PCM::open (pcm.rs:131)
+
+382 bytes from
+	snd_config_hook_load
+
+423 bytes from
+	snd_config_hook_load
+
+432 bytes from
+	snd_config_hook_load
+
+457 bytes from
+	snd_config_update_ref
+
+487 bytes from
+	alsa::pcm::PCM::open (pcm.rs:131)
+
+4_608 bytes from
+	dlopen.c 71
+
+Definitely lost 0 bytes
+possibly lost 65_360 bytes
+
+helgrind
+
+lots of stuff from the jiffy
+probably because no locks are used
+
+first unique non log one is
+	camera::log::LogPipe::pad_user_string (log.rs:398)
+
+its saying that an info log and a pad have a data race
+
+this and a bunch of
+a log update clone in set_pipe and a string conversion
+in the info fn
+
+this all occured before the creation of thread #3 "audio"
+
+the first data race in thread #3 is between
+	a clone during the thread start itself
+
+	and the std::sys::unix::thread::Thread::new::thread_start (thread.rs:108)
+	inside the data symbol "_rtld_local"
+
+this continues to occur
+
+between the same two threads
+
+for some time
+
+first unique after that is
+	<core::pin::Pin<P> as pasts::notify::Notify>::poll_next (notify.rs:80)
+	by 0x133405: nolock::queues::mpsc::jiffy::bufferlist::BufferList<T>::boxed (bufferlist.rs:36)
+
+next is
+	nolock::queues::mpsc::jiffy::bufferlist::BufferList<T>::scan (bufferlist.rs:139)
+	nolock::queues::mpsc::jiffy::bufferlist::BufferList<T>::scan (bufferlist.rs:132)
+
+	both on thread #2 "log effects"
+
+	and the :139 variant reoccurs several times
+	each from uses of try_dequeue (jiffy.rs:374)
+
+	this is followed, still on thread #2 "log effects"
+	by an atomic load from
+		nolock::queues::mpsc::jiffy::node::Node<T>::get_state (node.rs:55)
+	still in the try_dequeue/scan callstack this time at (bufferlist.rs:98)
+
+	followed on thread #2 by
+	scan (bufferlist.rs:125)
+
+	these then show up still on thread #2
+	at 0x4E15E69: memmove (vg_replace_strmem.c:1400)
+	by 0x13223F: <core::panic::unwind_safe::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once (unwind_safe.rs:271)
+
+	then alot of them all on thread #2
+
+	followed by an enqueue (jiffy.rs:144) on thread #1
+		with poll_next (notify.rs:80)
+
+	followed by several all on thread #1
+	they all say they were alloc'd by thread #3 "audio"
+
+	followed by on thread #3 a memmove (vg_replace_strmem.c:1400)
+	with core::ops::function::FnOnce::call_once{{vtable.shim}} (function.rs:250)
+	Block was alloc'd by thread #2
+
+	followed by one more the same way
+
+	then on thread #2 there is a
+	memmove (vg_replace_strmem.c:1400)
+	with std::rt::lang_start::{{closure}} (rt.rs:166)
+	Block was alloc'd by thread #1
+
+	followed by many more of the same
+
+	then on thread #1 "main"
+	followed by enqueue (jiffy.rs:144)
+	poll_next (notify.rs:80)
+	Block was alloc'd by thread #3
+
+	followed by more of the same
+
+	then thread #5 "ui" clone (clone.S:76)
+	with call_once (function.rs:250)
+
+	followed by an enqueue (jiffy.rs:144)
+	with poll_next (notify.rs:80)
+    ==142432==  Block was alloc'd by thread #3
+
+	followed by same for several
+
+	then on thread #3
+	a memmove (vg_replace_strmem.c:1400)
+	call_once{{vtable.shim}} (function.rs:250)
+	==142432==  Block was alloc'd by thread #2
+
+	followed by a few of same
+
+	followed on thread #1 with
+	a enqueue (jiffy.rs:144)
+	with poll_next (notify.rs:80)
+	==142432==  Block was alloc'd by thread #3
+
+	followed by one more of the same
+
+	followed on thread #2 with
+	memmove (vg_replace_strmem.c:1400)
+	with <core::panic::unwind_safe::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once (unwind_safe.rs:271)
+	Block was alloc'd by thread #5
+
+	and many more
+
+	then thread #4 was created "video"
+	followed also on thread #4 with
+	enqueue (jiffy.rs:144)
+	with poll_next (notify.rs:80)
+	Block was alloc'd by thread #3
+
+	followed by several more
+
+	and then the creation of thread #6 (might be "alsa cpal")
+
+	followed on thread #6 by
+	enqueue (jiffy.rs:144)
+	with poll_next (notify.rs:80)
+	Block was alloc'd by thread #3
+
+	followed by same
+
+	followed on thread #2 with
+	memmove (vg_replace_strmem.c:1400)
+	by <core::panic::unwind_safe::AssertUnwindSafe<F> as core::ops::function::FnOnce<()>>::call_once (unwind_safe.rs:271)
+	Block was alloc'd by thread #4
+
+	and then we hit our 100
+
+
+	after reading some of the queue paper, it seems
+	that dequeues do not even use an atomic operation
+	so that might be what valgrind is talking about	
+	
+	
+

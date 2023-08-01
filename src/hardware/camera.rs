@@ -123,16 +123,8 @@ impl IRSensitiveCamera {
 use crate::log::{Job, LogPipe};
 
 /// this function sets up and begins streaming frames from
-/// either USB or CSI cameras, and sends them through the 
+/// either USB or CSI cameras, and sends them through the
 /// queue to the video post processing functions.
 pub async fn start(mut queue: Sender<VideoUpdate>, camera_log: LogPipe) {
     camera_log.info("started camera task", Job::VideoInput);
-    for _ in 1..=10 {
-        let new_mock_frame = VideoUpdate {};
-        queue
-            .enqueue(new_mock_frame)
-            .expect("failed to send mock frame from camera task to main");
-        camera_log
-            .info("just sent a frame from camera to main", Job::VideoInput);
-    }
 }
