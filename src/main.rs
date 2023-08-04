@@ -6,6 +6,8 @@ mod queue;
 mod ui;
 use crate::log::{Job, LogPipe};
 
+use creusot_contracts::*;
+
 use core::time::Duration;
 
 #[cfg(feature = "std")]
