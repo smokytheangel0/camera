@@ -9,22 +9,22 @@ channel = "stable"
 [dependencies]
 # feature based motion detection
 # cv = "0.6.0"
-sled = "0.34.7"
+# sled = "0.34.7"
 winit = "0.28.6"
 # uvc = {version = 0.2.0, features = ["vendor"]}
 # audio denoising
-nnnoiseless = "0.5.1"
+# nnnoiseless = "0.5.1"
 # image denoising
-#oidn = "1.4.3"
+# oidn = "1.4.3"
 # using raster::filter::{sharpen, brightness}
-raster = "0.2.0"
+# raster = {path = "../../utilities/raster"}
 # libasound2-dev
 cpal = "0.15.2"
 # cpal needs gag for logging
 # gag = "1.0.0"
 # must be initialized
 # with .set_logger()
-log = "0.4.17"
+# log = "0.4.17"
 
 pasts = "0.14.2"
 iso8601 = {version = "0.6.1", default-features = false}
@@ -37,7 +37,7 @@ anyhow = "1.0.71"
 cfg-if = "1.0.0"
 #gag = "1.0.0"
 btleplug = {version = "0.11.0", features=["serde"]}
-stateright = {path = "../../utilities/stateright"}
+#stateright = {path = "../../utilities/stateright"}
 creusot-contracts = {path = "../../utilities/creusot/creusot-contracts"}
 
 [features]

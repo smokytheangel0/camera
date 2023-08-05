@@ -1,0 +1,31 @@
+sled has some issues including data races in lock_api
+	unwinding behaviour
+	data durability
+	panic
+	contains_key returns true even if key does not exist
+
+stateright is in the process of switching from actix
+	it also has an old version of crossbeam
+	from an old version of tokio
+	and a potential segfault in time
+	all from actix I think
+
+
+raster is no longer maintained, and the version of
+	image it uses is vulnerable to use after free and
+
+	image is maintained however and has newer versions.
+
+	raster compiles with the new versions, someone has
+	already made a pull request, crate is unmaintained
+	we should replicate that pull, because it built
+	in on its own, but is now surfacing the image
+	api mismatch i think
+	https://github.com/kosinix/raster/pull/27/commits/e56a010aa551c69aad08c15ebf14a6ae8001ecc3
+	this dif mostly does the job I believe
+
+nnoiseless uses an older version of clap that uses atty crate
+	instead of std::io::is_terminal. atty has a unaligned read
+	on windows
+	should try updating to a newer version of clap and pulling
+	the nnoiseless is maintained
